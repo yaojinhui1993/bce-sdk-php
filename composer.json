@@ -1,5 +1,5 @@
 {
-  "name": "baidubce/bce-sdk-php",
+  "name": "yaojinhui1993/bce-sdk-php",
   "homepage": "http://bce.baidu.com/sdkforphp",
   "description": "BCE SDK for PHP",
   "keywords": [
@@ -21,7 +21,7 @@
   "require": {
     "php": ">=5.3.3",
     "psr/log": "^1.0.0",
-    "guzzle/guzzle": "~3.9"
+    "guzzle/guzzle": "*"
   },
   "suggest": {
     "monolog/monolog": "Adds support for logging HTTP requests and responses"
