@@ -112,9 +112,46 @@ class BceBaseClient
             $metadata[BosOptions::STORAGE_CLASS] =
               trim($headers[HttpHeaders::BCE_STORAGE_CLASS], '"');
         }
+        if (isset($headers[HttpHeaders::NEXT_APPEND_OFFSET])) {
+            $metadata[BosOptions::NEXT_APPEND_OFFSET] = 
+                $headers[HttpHeaders::NEXT_APPEND_OFFSET];
+        }
+        if (isset($headers[HttpHeaders::BCE_OBJECT_TYPE])) {
+            $metadata[BosOptions::BCE_OBJECT_TYPE] = 
+                $headers[HttpHeaders::BCE_OBJECT_TYPE];
+        }
+        if (isset($headers[HttpHeaders::BCE_CONTENT_CRC32])) {
+            $metadata[BosOptions::CONTENT_CRC32] =
+                (int)$headers[HttpHeaders::BCE_CONTENT_CRC32];
+        }
+        if (isset($headers[HttpHeaders::CONTENT_DISPOSITION])) {
+            $metadata[BosOptions::CONTENT_DISPOSITION] =
+                $headers[HttpHeaders::CONTENT_DISPOSITION];
+        }
+        if (isset($headers[HttpHeaders::EXPIRES])) {
+            $metadata[BosOptions::EXPIRES] =
+                $headers[HttpHeaders::EXPIRES];
+        }
+        if (isset($headers[HttpHeaders::CACHE_CONTROL])) {
+            $metadata[BosOptions::CACHE_CONTROL] =
+                $headers[HttpHeaders::CACHE_CONTROL];
+        }
+        if (isset($headers[HttpHeaders::LOCATION])) {
+            $metadata[BosOptions::LOCATION] =
+                $headers[HttpHeaders::LOCATION];
+        }
+        if (isset($headers[HttpHeaders::BCE_SYMLINK_TARGET])) {
+            $metadata[BosOptions::BCE_SYMLINK_TARGET] =
+                $headers[HttpHeaders::BCE_SYMLINK_TARGET];
+        }
         return $metadata;
     }
 
+    /** return the elements which array_slice(func_get_args(), 1) contains from options
+     * throw exception when there are unexpected options.
+     * @param array $options
+     * @return array $result
+     */
     protected function parseOptions(array $options) {
         return $this->doParseOptions(
             $options,
@@ -123,6 +160,10 @@ class BceBaseClient
         );
     }
 
+    /** return the elements which array_slice(func_get_args(), 1) contains from options
+     * @param array $options
+     * @return array $result
+     */
     protected function parseOptionsIgnoreExtra(array $options) {
         return $this->doParseOptions(
             $options,

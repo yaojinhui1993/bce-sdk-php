@@ -1,6 +1,6 @@
 <?php
 /*
-* Copyright 2014 Baidu, Inc.
+* Copyright 2018 Baidu, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,22 @@
 * the License.
 */
 
-namespace BaiduBce;
+namespace BaiduBce\Services\EipGroup\model;
 
-class BceClientConfigOptions
+class Reservation
 {
-    const CONNECTION_TIMEOUT_IN_MILLIS = 'connectionTimeoutInMillis';
-    const SOCKET_TIMEOUT_IN_MILLIS = 'socketTimeoutInMillis';
-    const PROTOCOL = 'protocol';
-    const REGION = 'region';
-    const ENDPOINT = 'endpoint';
-    const CUSTOM = 'custom';
-    const CREDENTIALS = 'credentials';
-    const RETRY_POLICY = 'retryPolicy';
-    const SEND_BUF_SIZE = 'sendBufSize';
-    const RECV_BUF_SIZE = 'recvBufSize';
-    const SESSION_TOKEN = 'sessionToken';
+    var $reservationLength;
+    var $reservationTimeUnit;
+
+    /**
+     * Reservation constructor.
+     *
+     * @param int $reservationLength
+     * @param string $reservationTimeUnit
+     */
+    function __construct($reservationLength, $reservationTimeUnit)
+    {
+        $this->reservationLength = $reservationLength;
+        $this->reservationTimeUnit = $reservationTimeUnit;
+    }
 }

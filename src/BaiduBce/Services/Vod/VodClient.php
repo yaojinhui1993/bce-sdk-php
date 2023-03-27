@@ -60,21 +60,28 @@ class VodClient extends BceBaseClient
      * You need upload video to sourceBucket and sourceKey via BosClient,
      * Then call processMedia method to get a VOD media.
      *
+     * @param string $mode apply media mode
      * @param array $options Supported options:
      *      {
      *          config: the optional bce configuration, which will overwrite the
      *                  default vod client configuration that was passed in constructor.
      *      }
      * @return mixed created vod media info
-     * @throws BceClientException
      */
-    public function applyMedia($options = array())
+    public function applyMedia($mode='', $options = array())
     {
-        list($config) = $this->parseOptions($options, 'config');
+        list($config, $presetGroup, $priority) =
+            $this->parseOptionsIgnoreExtra($options,
+                'config',
+                'presetGroup',
+                'priority');
 
         $params = array(
             'apply' => null,
         );
+        if (!empty($mode)) {
+            $params['mode'] = $mode;
+        }
         return $this->sendRequest(
             HttpMethod::POST,
             array(
@@ -98,15 +105,32 @@ class VodClient extends BceBaseClient
      *          config: the optional bce configuration, which will overwrite the
      *                  default vod client configuration that was passed in constructor.
      *          sourceExtension: extension of the media source.
-     *          transcodingPresetGroupName: preset group to be used for the media
+     *          presetGroup: preset group to be used for the media
+     *          priority: priority
+     *          actionAttributes: { remove watermark and prologue params for the media
+     *              horizontalOffsetInPixel: number, watermark Horizontal offset
+     *              verticalOffsetInPixel: number, watermark Vertical offset
+     *              watermarkWidth: number, watermark region width
+     *              watermarkHeight: number, watermark region height
+     *              prologueCuttingInSeconds: number, prologue duration time
+     *          }
      *      }
      * @return mixed created vod media info
      * @throws BceClientException
      */
     public function processMedia($mediaId, $title, $description, $options = array())
     {
-        list($config, $extension, $presetGroup) =
-            $this->parseOptions($options, 'config', 'sourceExtension', 'transcodingPresetGroupName');
+        list($config, $extension, $presetGroup, $priority, $actionAttributes) =
+            $this->parseOptions($options,
+                'config',
+                'sourceExtension',
+                'presetGroup',
+                'priority',
+                'actionAttributes');
+        if (is_null($priority)) {
+            $priority = 0;
+        }
+
         $params = array(
             'process' => null,
         );
@@ -115,7 +139,12 @@ class VodClient extends BceBaseClient
             'description' => $description,
             'sourceExtension' => $extension,
             'transcodingPresetGroupName' => $presetGroup,
+            'priority' => $priority
         );
+
+        if ($actionAttributes !== null) {
+            $body['actionAttributes'] = $actionAttributes;
+        }
 
         return $this->sendRequest(
             HttpMethod::PUT,
@@ -144,12 +173,13 @@ class VodClient extends BceBaseClient
      */
     public function rerunMedia($mediaId, $options = array())
     {
-        list($config) = $this->parseOptions($options, 'config');
-
+        list($config, $presetGroup, $priority) =
+            $this->parseOptions($options, 'config', 'presetGroup', 'priority');
         $params = array(
             'rerun' => null,
+            'presetGroup' => $presetGroup,
+            'priority' => $priority
         );
-
         return $this->sendRequest(
             HttpMethod::PUT,
             array(
@@ -165,17 +195,23 @@ class VodClient extends BceBaseClient
      * merge vod media(s)
      * You can merge media(s) to one media
      *
+     * @param $mediaClips media clips to be merged into the new media
+     * @param $title the title of the new media
+     * @param $description the description of the new media
      * @param array $options Supported options:
      *      {
      *          config: the optional bce configuration, which will overwrite the
      *                  default vod client configuration that was passed in constructor.
+     *          presetGroup: the preset group of the new media
+     *          priority: the priority of the new media
      *      }
      * @return mixed merged vod media info
      * @throws BceClientException
      */
     public function mergeMedia($mediaClips, $title, $description, $options = array())
     {
-        list($config) = $this->parseOptions($options, 'config');
+        list($config, $presetGroup, $priority)
+            = $this->parseOptions($options, 'config', 'presetGroup', 'priority');
 
         $params = array(
             'merge' => null,
@@ -185,9 +221,12 @@ class VodClient extends BceBaseClient
             'title' => $title,
             'description' => $description,
         );
+
         $body = array(
             'attributes' => $attributes,
             'mediaClips' => $mediaClips,
+            'transcodingPresetGroupName' => $presetGroup,
+            'priority' => $priority,
         );
 
         return $this->sendRequest(
@@ -207,6 +246,7 @@ class VodClient extends BceBaseClient
      * @param $fileName string, path of local file
      * @param $title string, the title of the media
      * @param $description string, the description of the media, optional
+     * @param string $mode the apply media mode
      * @param array $options Supported options:
      *      {
      *          config: the optional bce configuration, which will overwrite the
@@ -215,7 +255,7 @@ class VodClient extends BceBaseClient
      * @return mixed created vod media info
      * @throws BceClientException
      */
-    public function createMediaFromFile($fileName, $title, $description = '', $options = array())
+    public function createMediaFromFile($fileName, $title, $description = '', $mode='', $options = array())
     {
         if (empty($fileName)) {
             throw new BceClientException("The parameter fileName should NOT be null or empty string");
@@ -225,7 +265,7 @@ class VodClient extends BceBaseClient
             throw new BceClientException("The parameter title should NOT be null or empty string");
         }
         // apply media
-        $uploadInfo = $this->applyMedia($options);
+        $uploadInfo = $this->applyMedia($mode, $options);
         // upload file to bos
         $this->uploadMedia($fileName, $uploadInfo->sourceBucket, $uploadInfo->sourceKey);
         // process media
@@ -234,7 +274,8 @@ class VodClient extends BceBaseClient
         if (!preg_match("/^[a-z0-9]{0,10}$/", $extension)) {
             $extension = '';
         }
-        $options['extension'] = $extension;
+        $options['sourceExtension'] = $extension;
+
         return $this->processMedia($uploadInfo->mediaId, $title, $description, $options);
     }
 
@@ -246,6 +287,7 @@ class VodClient extends BceBaseClient
      * @param $key    string, bos object key
      * @param $title  string, the title of the media
      * @param $description string, the description of the media, optional
+     * @param string $mode the apply media mode
      * @param array $options Supported options:
      *      {
      *          config: the optional bce configuration, which will overwrite the
@@ -254,7 +296,7 @@ class VodClient extends BceBaseClient
      * @return mixed created vod media info
      * @throws BceClientException
      */
-    public function createMediaFromBosObject($bucket, $key, $title, $description = '', $options = array())
+    public function createMediaFromBosObject($bucket, $key, $title, $description = '', $mode = '', $options = array())
     {
         if (empty($bucket)) {
             throw new BceClientException("The parameter fileName should NOT be null or empty string");
@@ -266,7 +308,7 @@ class VodClient extends BceBaseClient
             throw new BceClientException("The parameter title should NOT be null or empty string");
         }
         // apply media
-        $uploadInfo = $this->applyMedia($options);
+        $uploadInfo = $this->applyMedia($mode, $options);
         // copy bos object
         $this->bosClient->copyObject($bucket, $key, $uploadInfo->sourceBucket, $uploadInfo->sourceKey);
         // process media
@@ -275,7 +317,7 @@ class VodClient extends BceBaseClient
         if (!preg_match("/^[a-z0-9]{0,10}$/", $extension)) {
             $extension = '';
         }
-        $options['extension'] = $extension;
+        $options['sourceExtension'] = $extension;
         return $this->processMedia($uploadInfo->mediaId, $title, $description, $options);
     }
 

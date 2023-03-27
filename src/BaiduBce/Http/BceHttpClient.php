@@ -209,8 +209,10 @@ class BceHttpClient
         // Send request
         try {
             $guzzleResponse = $this->guzzleClient->send($guzzleRequest);
-        } catch (\Exception $e) {
-            throw new BceClientException($e->getMessage());
+        } catch (Throwable  $e) {
+                    $this->logger->warning(
+                        'Fail to parse error response body: '
+                        . $e->getMessage());
         }
 
         //statusCode < 200
@@ -222,7 +224,7 @@ class BceHttpClient
         if ($guzzleResponse->getTransferEncoding() === 'chunked') {
             if ($guzzleResponse->isContentType('json')) {
                 $responseBody = $guzzleResponse->json();
-                if (isset($responseBody['code'])) {
+                if (isset($responseBody['code']) && $responseBody['code'] === 'InternalError') {
                   $guzzleResponse->setStatus(500);
                 }
             }

@@ -21,4 +21,7 @@ class StorageClass
 {
     const STANDARD = 'STANDARD';
     const STANDARD_IA = 'STANDARD_IA';
+    const COLD = 'COLD';
+    const ARCHIVE = 'ARCHIVE';
+
 }

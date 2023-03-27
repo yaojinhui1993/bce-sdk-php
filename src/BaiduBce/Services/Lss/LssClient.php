@@ -2510,6 +2510,200 @@ class LssClient extends BceBaseClient
     }
 
     /**
+     * Get a security policy of LSS 3.0.
+     *
+     * @param $name string, security policy name
+     * @param array $options Supported options:
+     *      {
+     *          config: the optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed security policy detail
+     * @throws BceClientException
+     */
+    public function querySecurityPolicy($name, $options = array())
+    {
+        list($config) = $this->parseOptions($options, 'config');
+
+        if (empty($name)) {
+            throw new BceClientException("The parameter name "
+                . "should NOT be null or empty string");
+        }
+        $this->prefix = '/v6';
+
+        return $this->sendRequest(
+            HttpMethod::GET,
+            array(
+                'config' => $config,
+            ),
+            "/securitypolicy/$name"
+        );
+    }
+
+    /**
+     * Add metadata into living stream for LSS 3.0.
+     *
+     * @param $domain string, name of play domain
+     * @param $app string, name of app
+     * @param $stream string, name of stream
+     * @param array $options Supported options:
+     *      {
+     *          config: the optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+    public function AddMetadataIntoStream($domain, $app, $stream, $options = array())
+    {
+        list($config, $metadata) = $this->parseOptions($options, 'config', 'metadata');
+
+        if (empty($domain)) {
+            throw new BceClientException("The parameter domain "
+                . "should NOT be null or empty string");
+        }
+        if (empty($app)) {
+            throw new BceClientException("The parameter app "
+                . "should NOT be null or empty string");
+        }
+        if (empty($stream)) {
+            throw new BceClientException("The parameter stream "
+                . "should NOT be null or empty string");
+        }
+        if (empty($metadata)) {
+            throw new BceClientException("The parameter metadata "
+                . "should NOT be null or empty string");
+        }
+
+        $params = array(
+            'addMetadata' => null,
+        );
+
+        $body = array(
+            'metadata' => $metadata
+        );
+        return $this->sendRequest(
+            HttpMethod::PUT,
+            array(
+                'config' => $config,
+                'params' => $params,
+                'body' => json_encode($body),
+            ),
+            "/domain/$domain/app/$app/stream/$stream"
+        );
+    }
+
+    /**
+     * Get realtime live source info list of a domain.
+     *
+     * @param $domain string, name of play domain
+     * @param array $options Supported options:
+     *      {
+     *          config: the optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+    public function getSourceInfoByDomain($domain, $options = array())
+    {
+        list($config) = $this->parseOptions($options, 'config');
+
+        if (empty($domain)) {
+            throw new BceClientException("The parameter domain "
+                . "should NOT be null or empty string");
+        }
+
+        return $this->sendRequest(
+            HttpMethod::GET,
+            array(
+                'config' => $config,
+            ),
+            "/domain/$domain/sourceInfo"
+        );
+    }
+
+    /**
+     * clip recording video.
+     *
+     * @param $name string, recording name
+     * @param array $options Supported options:
+     *      {
+     *          config: the optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed security policy detail
+     * @throws BceClientException
+     */
+    public function clipRecordingVideo($domain, $app, $stream, $options = array()) {
+        list($config, $filename, $startTime, $endTime, $format, $pipeline,
+            $preset, $sourceFile, $clipId) = $this->parseOptions(
+            $options,
+            'config',
+            'filename',
+            'startTime',
+            'endTime',
+            'format',
+            'pipeline',
+            'preset',
+            'sourceFile',
+            'clipId'
+        );
+
+        if (empty($domain)) {
+            throw new BceClientException("The parameter domain "
+                . "should NOT be null or empty string");
+        }
+        if (empty($app)) {
+            throw new BceClientException("The parameter app "
+                . "should NOT be null or empty string");
+        }
+        if (empty($stream)) {
+            throw new BceClientException("The parameter stream "
+                . "should NOT be null or empty string");
+        }
+        $body = array(
+            'playDomain' => $domain,
+            'app' => $app,
+            'stream' => $stream,
+        );
+
+        if ($filename !== null) {
+            $body['filename'] = $filename;
+        }
+        if ($startTime !== null) {
+            $body['startTime'] = $filename;
+        }
+        if ($endTime !== null) {
+            $body['endTime'] = $filename;
+        }
+        if ($format !== null) {
+            $body['format'] = $filename;
+        }
+        if ($pipeline !== null) {
+            $body['pipeline'] = $filename;
+        }
+        if ($preset !== null) {
+            $body['preset'] = $filename;
+        }
+        if ($sourceFile !== null) {
+            $body['sourceFile'] = $filename;
+        }
+        if ($clipId !== null) {
+            $body['clipId'] = $filename;
+        }
+
+        return $this->sendRequest(
+            HttpMethod::POST,
+            array(
+                'config' => $config,
+                'body' => json_encode($body),
+            ),
+            '/recording/clip'
+        );
+    }
+
+    /**
      * Create HttpClient and send request
      * @param string $httpMethod The Http request method
      * @param array $varArgs The extra arguments

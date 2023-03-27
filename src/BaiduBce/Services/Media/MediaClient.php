@@ -353,8 +353,6 @@ class MediaClient extends BceBaseClient
         }
         if ($pipelineConfig !== null) {
             $body['config'] = $pipelineConfig;
-        } else {
-            $body['config'] = array('capacity' => 20);
         }
 
         return $this->sendRequest(
@@ -364,6 +362,51 @@ class MediaClient extends BceBaseClient
                 'body' => json_encode($body),
             ),
             '/pipeline'
+        );
+    }
+
+    /**
+     * update a pipeline
+     *
+     * @param string $pipelineName The pipeline's name
+     * @param array $options Supported options:
+     *      {
+     *          clientConfig: The optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *          all pipeline parameters for updating
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+
+    public function updatePipeline($pipelineName, $options = array())
+    {
+        list($config) = $this->parseOptionsIgnoreExtra(
+            $options,
+            'clientConfig'
+        );
+
+        if (empty($pipelineName)) {
+            throw new BceClientException("The parameter pipelineName "
+                ."should NOT be null or empty string");
+        }
+
+        if (!empty($config)) {
+            unset($options['clientConfig']);
+        }
+
+        $body = $options;
+        if (array_key_exists('pipelineConfig', $body)) {
+            $body['config'] = $body['pipelineConfig'];
+        }
+
+        return $this->sendRequest(
+            HttpMethod::PUT,
+            array(
+                'config' => $config,
+                'body' => json_encode($body),
+            ),
+            "/pipeline/$pipelineName"
         );
     }
 
@@ -499,6 +542,42 @@ class MediaClient extends BceBaseClient
                 'body' => json_encode($body),
             ),
             '/preset'
+        );
+    }
+
+    /**
+     * update a preset
+     *
+     * @param string $presetName The preset's name
+     * @param array $options the preset for updating
+     * @return mixed
+     * @throws BceClientException
+     */
+
+    public function updatePreset($presetName, $options = array())
+    {
+        list($config) = $this->parseOptionsIgnoreExtra(
+            $options,
+            'config'
+        );
+
+        if (empty($presetName)) {
+            throw new BceClientException("The parameter presetName "
+                ."should NOT be null or empty string");
+        }
+
+        if (!empty($config)) {
+            unset($options['config']);
+        }
+        $body = $options;
+
+        return $this->sendRequest(
+            HttpMethod::PUT,
+            array(
+                'config' => $config,
+                'body' => json_encode($body),
+            ),
+            "/preset/$presetName"
         );
     }
 
@@ -934,5 +1013,135 @@ class MediaClient extends BceBaseClient
         $result = $this->parseJsonResult($response['body']);
         $result->metadata = $this->convertHttpHeadersToMetadata($response['headers']);
         return $result;
+    }
+
+    /**
+     * List all notifications' information
+     *
+     * @param array $options Supported options:
+     *      {
+     *          config: The optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     */
+    public function listNotifications($options = array())
+    {
+        list($config) = $this->parseOptions($options, 'config');
+
+        return $this->sendRequest(
+            HttpMethod::GET,
+            array(
+                'config' => $config,
+            ),
+            '/notification'
+        );
+    }
+
+    /**
+     * Create a notification
+     *
+     * @param string $name The notification name
+     * @param string $endpoint The notification endpoint
+     * @param array $options Supported options:
+     *      {
+     *          config: The optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+    public function createNotification(
+        $name,
+        $endpoint,
+        $options = array()
+    ) {
+        list($config) = $this->parseOptions(
+            $options,
+            'config'
+        );
+
+        if (empty($name)) {
+            throw new BceClientException("The parameter name "
+                ."should NOT be null or empty string");
+        }
+
+        if (empty($endpoint)) {
+            throw new BceClientException("The parameter endpoint "
+                ."should NOT be null or empty string");
+        }
+
+        $body = array(
+            'name' => $name,
+            'endpoint' => $endpoint,
+        );
+        return $this->sendRequest(
+            HttpMethod::POST,
+            array(
+                'config' => $config,
+                'body' => json_encode($body),
+            ),
+            '/notification'
+        );
+    }
+
+    /**
+     * Get the specific notification information
+     *
+     * @param string $name The notification name
+     * @param array $options Supported options:
+     *      {
+     *          config: The optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+    public function getNotification($name, $options = array())
+    {
+        list($config) = $this->parseOptions($options, 'config');
+
+        if (empty($name)) {
+            throw new BceClientException("The parameter name "
+                ."should NOT be null or empty string");
+        }
+
+        return $this->sendRequest(
+            HttpMethod::GET,
+            array(
+                'config' => $config,
+            ),
+            "/notification/$name"
+        );
+    }
+
+    /**
+     * Delete the specific notification
+     *
+     * @param string $name The notification name
+     * @param array $options Supported options:
+     *      {
+     *          config: The optional bce configuration, which will overwrite the
+     *                  default client configuration that was passed in constructor.
+     *      }
+     * @return mixed
+     * @throws BceClientException
+     */
+    public function deleteNotification($name, $options = array())
+    {
+        list($config) = $this->parseOptions($options, 'config');
+
+        if (empty($name)) {
+            throw new BceClientException("The parameter name "
+                ."should NOT be null or empty string");
+        }
+
+        return $this->sendRequest(
+            HttpMethod::DELETE,
+            array(
+                'config' => $config,
+            ),
+            "/notification/$name"
+        );
     }
 }
